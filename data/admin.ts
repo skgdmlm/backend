@@ -1,5 +1,5 @@
 export const admin = {
-  email: "testaccount@mailinator.com",
-  password: "Test@123",
-  name: "Test Admin",
+  email: "skgdmlm@gmail.com",
+  password: "Skgd@123",
+  name: "Admin",
 };
