@@ -301,7 +301,7 @@ export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
     otp
   })
   await sendEmail({
-    to: req.user.email,
+    to: user.email,
     subject: "EMAIL verification",
     html: `<p>${otp}</p>`,
   });
