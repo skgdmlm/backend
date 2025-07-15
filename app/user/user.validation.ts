@@ -56,6 +56,13 @@ export const otpVerification = checkExact([
     .isEmail()
     .withMessage("Email must be of valid type")
 ]);
+export const resendOtpVerification = checkExact([
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be of valid type")
+]);
 
 export const changePassword = checkExact([
   body("currentPassword").custom(async (value, { req }) => {

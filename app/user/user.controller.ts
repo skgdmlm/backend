@@ -221,10 +221,8 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 
 export const editUser = asyncHandler(async (req: Request, res: Response) => {
   const { name, bankDetails = null } = req.body;
-  console.log('name: ', name);
   const result = await userService.editUser(req.params.id, { name });
   if (bankDetails) {
-    console.log('bankDetails: ', bankDetails);
     if (result?.bankDetails) {
       await bankService.editBank(result.bankDetails, bankDetails)
     } else {
@@ -290,6 +288,26 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
     refreshToken: tokens.refreshToken,
   });
   res.send(createResponse(tokens));
+});
+export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
+
+  const { email } = req.body;
+  const user = await userService.getUserByEmail(email, "-password");
+  if (!user) {
+    throw createHttpError(400, { message: `User with email ${email} not found` })
+  }
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  await userService.editUser(req.user._id, {
+    otp
+  })
+  await sendEmail({
+    to: req.user.email,
+    subject: "EMAIL verification",
+    html: `<p>${otp}</p>`,
+  });
+  
+  res.send(createResponse({ otp }));
+  
 });
 export const getUserInfo = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.getUserById(req.user?._id!);

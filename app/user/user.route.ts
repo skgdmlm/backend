@@ -36,11 +36,17 @@ router
     catchError,
     userController.verifyInvitation,
   )
-    .post(
+  .post(
     "/verify-otp",
     userValidator.otpVerification,
     catchError,
     userController.verifyOtp,
+  )
+  .post(
+    "/resend-otp",
+    userValidator.resendOtpVerification,
+    catchError,
+    userController.resendOtp,
   )
   .post(
     "/reset-password",
