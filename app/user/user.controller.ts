@@ -297,7 +297,7 @@ export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
     throw createHttpError(400, { message: `User with email ${email} not found` })
   }
   const otp = Math.floor(100000 + Math.random() * 900000);
-  await userService.editUser(req.user._id, {
+  await userService.editUser(user._id, {
     otp
   })
   await sendEmail({
