@@ -45,7 +45,9 @@ export const getUserByIdWithBankDetails = async (
   id: string,
   projection?: ProjectionType<IUser>,
 ) => {
-  const result = await UserSchema.findById(id, projection).populate("bankDetails").lean();
+  const result = await UserSchema.findById(id, projection)
+    .populate("bankDetails")
+    .lean();
   return result;
 };
 
@@ -54,15 +56,15 @@ export const getAllUser = async (
   projection?: ProjectionType<IUser>,
   options?: QueryOptions<IUser>,
 ) => {
-  
-  if('search' in condition)
-  {
-    condition['name'] =  {$regex: new RegExp(condition['search'], 'i') };
-    delete condition['search']
+  if ("search" in condition) {
+    condition["name"] = { $regex: new RegExp(condition["search"], "i") };
+    delete condition["search"];
   }
-  const result = await UserSchema.find(condition, projection, options).sort({
-    createdAt: -1
-  }).lean();
+  const result = await UserSchema.find(condition, projection, options)
+    .sort({
+      createdAt: -1,
+    })
+    .lean();
   return result;
 };
 export const getUserByEmail = async (
@@ -91,7 +93,7 @@ export async function buildReferralTree(userId: string): Promise<any> {
     .lean();
 
   const children = await Promise.all(
-    referralUsers.map((referral) => buildReferralTree(referral._id.toString()))
+    referralUsers.map((referral) => buildReferralTree(referral._id.toString())),
   );
   return {
     id: user._id,

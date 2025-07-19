@@ -4,8 +4,11 @@ import CommissionSchema from "./commission.schema";
 import * as userService from "../user/user.service";
 import * as commissionRateService from "../commissionRate/commissionRate.service";
 import * as commissionService from "../commission/commission.service";
-import * as transactionService from "../transaction/transaction.service"
-import { TransactionStatus, TransactionType } from "../transaction/transaction.dto";
+import * as transactionService from "../transaction/transaction.service";
+import {
+  TransactionStatus,
+  TransactionType,
+} from "../transaction/transaction.dto";
 
 export const createCommission = async (
   data: Omit<ICommission, "_id" | "createdAt" | "updatedAt">,
@@ -39,26 +42,35 @@ export const getCommissionById = async (id: string) => {
   return result;
 };
 
-export const getAllCommission = async (userId: string, skip: number, limit: number) => {
-  const result = await CommissionSchema.find({earnerId: userId}).populate({
+export const getAllCommission = async (
+  userId: string,
+  skip: number,
+  limit: number,
+) => {
+  const result = await CommissionSchema.find({ earnerId: userId })
+    .populate({
       path: "referredUserId",
-      select: "name"
-    }).skip(skip).limit(limit).sort({
-      createdAt: -1
-    }).lean();
+      select: "name",
+    })
+    .skip(skip)
+    .limit(limit)
+    .sort({
+      createdAt: -1,
+    })
+    .lean();
   return result;
 };
 export const getAllCommissionCount = async (userId: string) => {
-  const result = await CommissionSchema.count({earnerId: userId});
+  const result = await CommissionSchema.count({ earnerId: userId });
   return result;
 };
 
 export const generateCommissions = async (
   newUserId: string,
-  amount: number
+  amount: number,
 ): Promise<void> => {
   let currentUser = await userService.getUserById(newUserId, "referrerId");
-  
+
   const commissionRates = await commissionRateService.getAllCommissionRate();
   const rates = commissionRates.reduce(
     (acc, rate) => {
@@ -67,7 +79,7 @@ export const generateCommissions = async (
     },
     {} as Record<number, number>,
   );
-  
+
   if (!currentUser?.referrerId) return;
 
   let referrerId: string | undefined | null = currentUser.referrerId;
@@ -75,27 +87,27 @@ export const generateCommissions = async (
 
   while (referrerId && level <= 10) {
     const rate = rates[level];
-    console.log('rate: ', rate);
+    console.log("rate: ", rate);
     if (!rate) break;
 
     const referrer = await userService.getUserById(referrerId);
     if (!referrer) break;
 
-    const commissionAmount = (amount * rate)/100;
-    const finalAmount = (commissionAmount * 0.9);
-    
+    const commissionAmount = (amount * rate) / 100;
+    const finalAmount = commissionAmount * 0.9;
+
     await commissionService.createCommission({
       earnerId: new Types.ObjectId(referrer._id),
       referredUserId: new Types.ObjectId(newUserId),
       level,
       amount: commissionAmount,
       hcPerent: 10,
-      finalAmount
+      finalAmount,
     });
     const lastTx = await transactionService.getLatestTransaction(referrer._id);
     const lastAmountAdded = finalAmount;
     const currentBalance = (lastTx?.balance ?? 0) + finalAmount;
-     await transactionService.createTransaction({
+    await transactionService.createTransaction({
       userId: new Types.ObjectId(referrer._id),
       type: TransactionType.COMMISSION,
       balance: currentBalance,
@@ -104,7 +116,7 @@ export const generateCommissions = async (
       description: `Commission from referral at level ${level}`,
       status: TransactionStatus.SUCCESS,
     });
-     if (referrer.badgeType === "yellow") break;
+    if (referrer.badgeType === "yellow") break;
     referrerId = referrer.referrerId;
     level++;
   }
@@ -118,7 +130,7 @@ export async function getTotalCommission(earnerId: string): Promise<number> {
         _id: null,
         total: { $sum: "$amount" },
       },
-    }
+    },
   ]);
 
   return result.length > 0 ? result[0].total : 0;

@@ -25,11 +25,11 @@ const CommissionSchema = new Schema<ICommission>(
       type: Number,
       required: true,
     },
-     hcPerent: {
+    hcPerent: {
       type: Number,
       required: true,
     },
-     finalAmount: {
+    finalAmount: {
       type: Number,
       required: true,
     },

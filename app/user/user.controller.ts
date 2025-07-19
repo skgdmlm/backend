@@ -15,7 +15,11 @@ import { BadgeType, ProviderType } from "./user.dto";
 import { hashPassword } from "./user.schema";
 import * as userService from "./user.service";
 import { generateCommissions } from "../commission/commission.service";
-import * as bankService from "../bank/bank.service"
+import * as bankService from "../bank/bank.service";
+import { verifyReferralPin } from "../referrals/referrals.service";
+import * as referralsService from "../referrals/referrals.service";
+import { Types } from "mongoose";
+import dayjs from "dayjs";
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.createUser(req.body);
@@ -23,91 +27,50 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const inviteUser = asyncHandler(async (req: Request, res: Response) => {
-  const { emails, badgeType } = req.body;
-  const adminId = req.user?._id;
-  const invitedUsers = await Promise.all(
-    emails.map(async (email: string) => {
-      // Create inactive user
-      const user = await userService.createUser({
-        email,
-        role: "USER",
-        active: false,
-        badgeType: badgeType as BadgeType,
-        provider: ProviderType.MANUAL,
-        referrerId: adminId
-      });
+  const { badgeType } = req.body;
+  const referrerId = req.user?._id;
+  if (!referrerId) {
+    throw new Error("Referrer ID is required");
+  }
+  const pin = referralsService.generateReferralPin()
 
-      // Generate refresh token for invite
-      const { refreshToken } = createUserTokens(user);
+  const exists = await referralsService.getReferralsByPin(pin);
+  if (exists) {
+    res.status(400).json({ error: 'Try again. PIN already exists' });
+    return;
+  }
 
-      // Save refresh token
-      await userService.editUser(user._id, { refreshToken });
-
-      // Build user-specific invite link
-      const url = `${process.env.FE_BASE_URL}/register?code=${refreshToken}&type=invite`;
-
-      // Send email
-      await sendEmail({
-        to: email,
-        subject: "Welcome to SRGD",
-        html: `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-      <p>
-        You have purchased our product worth ₹2000. Kindly confirm your purchase by clicking the following 
-        <a href="${url}" target="_blank" style="color: #1a73e8;">LINK</a> to join our SRGD network.
-      </p>
-      <p>Regards,<br/>Team SRGD</p>
-            <div style="text-align: left; margin-top: 15px;">
-        <img 
-          src="https://res.cloudinary.com/ddruijvbn/image/upload/v1752575905/mlmlogo_h66lo2.jpg" 
-          alt="SRGD Logo" 
-          style="max-width: 100px; height: auto;"
-        />
-      </div>
-    </div>
-  `,
-      });
-
-
-      return user;
-    }),
-  );
-
-  res.send(createResponse(invitedUsers, "Users invited successfully."));
+  const result = await referralsService.createReferrals({
+    pin,
+    referrerId: new Types.ObjectId(referrerId),
+    expiresAt: dayjs().add(30, 'days').toDate(),
+    isUsed: false,
+    badgeType
+  });
+  res.send(createResponse(result, "Pin generated successfully."));
 });
 
 export const verifyInvitation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { token, password, name } = req.body;
-    const { email, expired } = decodeToken(token);
-    const user = await userService.getUserByEmail(email, {
-      refreshToken: true,
+    const { pin, email, password, name } = req.body;
+    console.log('pin: ', pin);
+    const referralInfo = await verifyReferralPin(pin);
+
+    const user = await userService.createUser({
+      email,
+      role: "USER",
       active: true,
-    });
-
-    if (!user || expired || token !== user.refreshToken) {
-      throw createHttpError(400, { message: "Invitation is expired" });
-    }
-
-    if (user?.active) {
-      throw createHttpError(400, {
-        message: "Invitation is accepeted, Please login",
-      });
-    }
-
-    if (user?.blocked) {
-      throw createHttpError(400, { message: "User is blocked" });
-    }
-    const tokens = createUserTokens(user);
-    await userService.editUser(user._id, {
-      password: await hashPassword(password),
+      badgeType: referralInfo?.badgeType ?? "green",
+      provider: ProviderType.MANUAL,
+      referrerId: referralInfo.referrerId._id,
+      password,
       name,
-      active: true,
-      refreshToken: tokens.refreshToken,
     });
+    await referralsService.editReferrals(referralInfo._id, { isUsed: true, usedBy: new Types.ObjectId(user._id) })
+
     const amount = process.env.COMMISSION_AMOUNT || 2000;
     await generateCommissions(user._id, Number(amount));
-    res.send(createResponse(tokens, "User verified sucssefully"));
+    res.send(createResponse(null, "User verified sucssefully"));
   },
 );
 
@@ -224,10 +187,10 @@ export const editUser = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.editUser(req.params.id, { name });
   if (bankDetails) {
     if (result?.bankDetails) {
-      await bankService.editBank(result.bankDetails, bankDetails)
+      await bankService.editBank(result.bankDetails, bankDetails);
     } else {
       const bank = await bankService.createBank(bankDetails);
-      await userService.editUser(result!._id, { bankDetails: bank._id })
+      await userService.editUser(result!._id, { bankDetails: bank._id });
     }
   }
   res.send(createResponse(result, "User updated sucssefully"));
@@ -248,7 +211,7 @@ export const getAllUser = asyncHandler(async (req: Request, res: Response) => {
   const limit = req.query.limit
     ? parseInt(req.query.limit as string)
     : undefined;
-  const search = req.query?.search ? req.query.search.toString().trim() : ''
+  const search = req.query?.search ? req.query.search.toString().trim() : "";
   const result = await userService.getAllUser({ search }, {}, { skip, limit });
 
   const total = await userService.countItems();
@@ -257,29 +220,27 @@ export const getAllUser = asyncHandler(async (req: Request, res: Response) => {
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
-    throw createHttpError(400, { message: "Invalid attempt to login" })
+    throw createHttpError(400, { message: "Invalid attempt to login" });
   }
-  const otp = Math.floor(100000 + Math.random() * 900000);
+
+  const tokens = createUserTokens(req.user);
+
   await userService.editUser(req.user._id, {
-    otp
-  })
-  await sendEmail({
-    to: req.user.email,
-    subject: "EMAIL verification",
-    html: `<p>${otp}</p>`,
+    refreshToken: tokens.refreshToken,
   });
-  res.send(createResponse({ otp }));
+  res.send(createResponse(tokens));
 });
 
 export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
-
   const { otp, email } = req.body;
   const user = await userService.getUserByEmail(email, "-password");
   if (!user) {
-    throw createHttpError(400, { message: `User with email ${email} not found` })
+    throw createHttpError(400, {
+      message: `User with email ${email} not found`,
+    });
   }
   if (user?.otp != otp) {
-    throw createHttpError(400, { message: "Invalid OTP" })
+    throw createHttpError(400, { message: "Invalid OTP" });
   }
 
   const tokens = createUserTokens(user);
@@ -290,36 +251,38 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
   res.send(createResponse(tokens));
 });
 export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
-
   const { email } = req.body;
   const user = await userService.getUserByEmail(email, "-password");
   if (!user) {
-    throw createHttpError(400, { message: `User with email ${email} not found` })
+    throw createHttpError(400, {
+      message: `User with email ${email} not found`,
+    });
   }
   const otp = Math.floor(100000 + Math.random() * 900000);
   await userService.editUser(user._id, {
-    otp
-  })
+    otp,
+  });
   await sendEmail({
     to: user.email,
     subject: "EMAIL verification",
     html: `<p>${otp}</p>`,
   });
-  
+
   res.send(createResponse({ otp }));
-  
 });
 export const getUserInfo = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.getUserById(req.user?._id!);
   res.send(createResponse(user));
 });
 
-export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
-  const user = await userService.getUserByIdWithBankDetails(req.user?._id!, {
-    password: false,
-  });
-  res.send(createResponse(user));
-});
+export const getUserProfile = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = await userService.getUserByIdWithBankDetails(req.user?._id!, {
+      password: false,
+    });
+    res.send(createResponse(user));
+  },
+);
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!;

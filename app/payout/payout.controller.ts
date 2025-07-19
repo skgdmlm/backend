@@ -1,11 +1,14 @@
 import * as payoutService from "./payout.service";
-import * as transactionService from "../transaction/transaction.service"
+import * as transactionService from "../transaction/transaction.service";
 import { createResponse } from "../common/helper/response.hepler";
 import asyncHandler from "express-async-handler";
 import { type Request, type Response } from "express";
 import createHttpError from "http-errors";
 import { Types } from "mongoose";
-import { TransactionStatus, TransactionType } from "../transaction/transaction.dto";
+import {
+  TransactionStatus,
+  TransactionType,
+} from "../transaction/transaction.dto";
 
 export const createPayout = asyncHandler(
   async (req: Request, res: Response) => {
@@ -35,7 +38,9 @@ export const createPayout = asyncHandler(
 export const processPayout = asyncHandler(
   async (req: Request, res: Response) => {
     const { transactionId } = req.body;
-    const txn = transactionService.editTransaction(transactionId, { status: TransactionStatus.SUCCESS });
+    const txn = transactionService.editTransaction(transactionId, {
+      status: TransactionStatus.SUCCESS,
+    });
     //process amount in their account
     res.send(createResponse(txn, "Payout processed sucssefully"));
   },
@@ -43,10 +48,12 @@ export const processPayout = asyncHandler(
 export const rejectPayout = asyncHandler(
   async (req: Request, res: Response) => {
     const { transactionId } = req.body;
-    const txn = await transactionService.editTransaction(transactionId, { status: TransactionStatus.REJECTED });
+    const txn = await transactionService.editTransaction(transactionId, {
+      status: TransactionStatus.REJECTED,
+    });
     //revert amount in their account
     const lastTx = await transactionService.getLatestTransaction(req.user!._id);
-    const currentBalance = (lastTx?.balance ?? 0) + (txn?.lastAmountAdded ?? 0)
+    const currentBalance = (lastTx?.balance ?? 0) + (txn?.lastAmountAdded ?? 0);
     await transactionService.createTransaction({
       userId: new Types.ObjectId(req.user!._id),
       type: TransactionType.PAYOUT,

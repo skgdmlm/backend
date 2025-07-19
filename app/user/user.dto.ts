@@ -21,7 +21,7 @@ export interface IUser extends BaseSchema {
   totalEarnings?: number;
   directReferralCount?: number;
   isPayoutEligible?: boolean;
-  otp?: number
+  otp?: number;
 }
 
 export enum ProviderType {

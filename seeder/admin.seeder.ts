@@ -17,7 +17,7 @@ export const adminSeeder = async (): Promise<void> => {
           provider: ProviderType.MANUAL,
           badgeType: "green",
           active: true,
-          blocked: false
+          blocked: false,
         });
         console.log("Admin seeder success.");
       } else {

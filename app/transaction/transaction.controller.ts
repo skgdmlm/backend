@@ -47,33 +47,35 @@ export const getTransactionById = asyncHandler(
 
 export const getAllTransaction = asyncHandler(
   async (req: Request, res: Response) => {
-     if(!req?.user)
-    {
+    if (!req?.user) {
       throw createHttpError(400, {
-        message: "Login first"
-      })
+        message: "Login first",
+      });
     }
-    const {skip=0, limit=10} = req.query;
-    const result = await transactionService.getAllTransaction(req.user._id, Number(skip), Number(limit));
-    const total = await transactionService.getAllTransactionCount(req.user._id)
-    res.send(createResponse({list: result, total}));
+    const { skip = 0, limit = 10 } = req.query;
+    const result = await transactionService.getAllTransaction(
+      req.user._id,
+      Number(skip),
+      Number(limit),
+    );
+    const total = await transactionService.getAllTransactionCount(req.user._id);
+    res.send(createResponse({ list: result, total }));
   },
 );
 export const getUserBalance = asyncHandler(
   async (req: Request, res: Response) => {
-    if(!req?.user)
-    {
+    if (!req?.user) {
       throw createHttpError(400, {
-        message: "Login first"
-      })
+        message: "Login first",
+      });
     }
-    const {id} = req.query;
-    console.log('id: ', id);
+    const { id } = req.query;
+    console.log("id: ", id);
     const user = id ? id.toString() : req.user?._id!;
-    console.log('user: ', user);
+    console.log("user: ", user);
     const result = await transactionService.getLatestTransaction(user);
-    console.log('result: ', result);
-    const balance = result?.balance ?? 0
+    console.log("result: ", result);
+    const balance = result?.balance ?? 0;
     res.send(createResponse(balance));
   },
 );

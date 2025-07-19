@@ -24,7 +24,7 @@ const BankSchema = new Schema<IBank>(
     accountNumber: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     ifscCode: {
       type: String,

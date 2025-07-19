@@ -14,7 +14,7 @@ const PayoutSchema = new Schema<IPayout>(
       type: Number,
       required: true,
       min: 1,
-    }
+    },
   },
   { timestamps: true },
 );

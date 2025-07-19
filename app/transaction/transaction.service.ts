@@ -2,7 +2,9 @@ import { Types } from "mongoose";
 import { type ITransaction } from "./transaction.dto";
 import TransactionSchema from "./transaction.schema";
 
-export const createTransaction = async (data: Omit<ITransaction, "_id" | "createdAt" | "updatedAt">) => {
+export const createTransaction = async (
+  data: Omit<ITransaction, "_id" | "createdAt" | "updatedAt">,
+) => {
   const result = await TransactionSchema.create({ ...data, active: true });
   return result;
 };
@@ -32,22 +34,29 @@ export const getTransactionById = async (id: string) => {
   return result;
 };
 
-export const getAllTransaction = async (userId: string, skip: number, limit: number) => {
+export const getAllTransaction = async (
+  userId: string,
+  skip: number,
+  limit: number,
+) => {
   const result = await TransactionSchema.find({ userId })
     .skip(skip)
     .limit(limit)
     .sort({
-      createdAt: -1
+      createdAt: -1,
     })
     .lean();
   return result;
 };
 export const getLatestTransaction = async (userId: string) => {
-  return TransactionSchema.findOne({ userId, status: { $nin: ["FAILED", "REJECTED"] } })
+  return TransactionSchema.findOne({
+    userId,
+    status: { $nin: ["FAILED", "REJECTED"] },
+  })
     .sort({ createdAt: -1 })
     .lean();
 };
 export const getAllTransactionCount = async (userId: string) => {
-  const result = await TransactionSchema.count({ userId })
+  const result = await TransactionSchema.count({ userId });
   return result;
 };

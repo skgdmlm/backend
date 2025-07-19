@@ -26,7 +26,7 @@ router
   .post(
     "/invite",
     roleAuth(["ADMIN", "USER"]),
-    userValidator.verifyEmail,
+    userValidator.inviteUser,
     catchError,
     userController.inviteUser,
   )

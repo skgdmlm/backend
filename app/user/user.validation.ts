@@ -23,13 +23,25 @@ export const verifyInvitation = checkExact([
     .isString()
     .bail()
     .withMessage("Name must be string"),
-  body("token")
+  body("pin")
     .notEmpty()
     .bail()
-    .withMessage("Token is required")
+    .withMessage("Pin is required")
     .isString()
     .bail()
     .withMessage("Token must be string"),
+   body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid")
+    .custom(async (value) => {
+      const user = await userService.getUserByEmail(value);
+      if (user) {
+        throw new Error(`User with ${value} already exists!`);
+      }
+      return true;
+    }),
   body("password")
     .notEmpty()
     .withMessage("Password is required")
@@ -54,14 +66,14 @@ export const otpVerification = checkExact([
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
-    .withMessage("Email must be of valid type")
+    .withMessage("Email must be of valid type"),
 ]);
 export const resendOtpVerification = checkExact([
   body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
-    .withMessage("Email must be of valid type")
+    .withMessage("Email must be of valid type"),
 ]);
 
 export const changePassword = checkExact([
@@ -86,20 +98,7 @@ export const changePassword = checkExact([
   }),
 ]);
 
-export const verifyEmail = checkExact([
-  body("emails")
-    .isArray({ min: 1 })
-    .withMessage("Emails must be a non-empty array"),
-  body("emails.*")
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Email must be valid")
-    .custom(async (value) => {
-      const user = await userService.getUserByEmail(value);
-      if (user) throw new Error("Email already exist.");
-      return true;
-    }),
+export const inviteUser = checkExact([
   body("badgeType")
     .optional()
     .isIn(["green", "yellow"])
@@ -158,9 +157,7 @@ export const updateUser = [
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
-  body("bankDetails")
-    .isObject()
-    .withMessage("Bank Details must be a object"),
+  body("bankDetails").isObject().withMessage("Bank Details must be a object"),
   body("bankDetails.accountHolderName")
     .notEmpty()
     .withMessage("Account Holder Name is required")
@@ -181,18 +178,15 @@ export const updateUser = [
     .withMessage("IFSC code is required")
     .isString()
     .withMessage("IFSC code must be valid"),
-
 ];
 
 export const editUser = [
-body("name")
+  body("name")
     .notEmpty()
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
-  body("bankDetails")
-    .isObject()
-    .withMessage("Bank Details must be a object"),
+  body("bankDetails").isObject().withMessage("Bank Details must be a object"),
   body("bankDetails.accountHolderName")
     .notEmpty()
     .withMessage("Account Holder Name is required")
