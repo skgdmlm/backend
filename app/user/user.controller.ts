@@ -27,11 +27,17 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const inviteUser = asyncHandler(async (req: Request, res: Response) => {
-  const { badgeType } = req.body;
+  const { badgeType, password } = req.body;
+  
   const referrerId = req.user?._id;
   if (!referrerId) {
     throw new Error("Referrer ID is required");
   }
+  const user = await userService.getUserById(referrerId, {password: true})
+    const validate = await isValidPassword(password, user?.password!);
+            if (!validate) {
+              throw new Error("Invalid password")
+            }
   const pin = referralsService.generateReferralPin()
 
   const exists = await referralsService.getReferralsByPin(pin);
@@ -53,7 +59,7 @@ export const inviteUser = asyncHandler(async (req: Request, res: Response) => {
 export const verifyInvitation = asyncHandler(
   async (req: Request, res: Response) => {
     const { pin, email, password, name } = req.body;
-    console.log('pin: ', pin);
+
     const referralInfo = await verifyReferralPin(pin);
 
     const user = await userService.createUser({
@@ -76,16 +82,15 @@ export const verifyInvitation = asyncHandler(
 
 export const resetPassword = asyncHandler(
   async (req: Request, res: Response) => {
-    const { token, password } = req.body;
-    const { email, expired } = decodeToken(token);
-    console.log({ email, expired });
-    const user = await userService.getUserByEmail(email, {
+    const {userId, password } = req.body;
+    console.log('userId: ', userId);
+    const user = await userService.getUserById(userId, {
       refreshToken: true,
       active: true,
     });
 
-    if (!user || expired || token !== user.refreshToken) {
-      throw createHttpError(400, { message: "Invitation is expired" });
+    if (!user) {
+      throw createHttpError(400, { message: "Invlid User" });
     }
 
     if (!user?.active) {
@@ -183,8 +188,12 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const editUser = asyncHandler(async (req: Request, res: Response) => {
-  const { name, bankDetails = null } = req.body;
-  const result = await userService.editUser(req.params.id, { name });
+  const { name, email, bankDetails = null } = req.body;
+  const anotherUser = await  userService.getUserByEmailWithoutUserId(email, req.params.id)
+  if (anotherUser) {
+    throw createHttpError(400, { message: "Email already exists" });
+  }
+  const result = await userService.editUser(req.params.id, { name, email });
   if (bankDetails) {
     if (result?.bankDetails) {
       await bankService.editBank(result.bankDetails, bankDetails);
@@ -202,7 +211,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const result = await userService.getUserById(req.params.id);
+  const result = await userService.getUserByIdWithBankDetails(req.params.id);
   res.send(createResponse(result));
 });
 

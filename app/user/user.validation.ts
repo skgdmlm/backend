@@ -98,11 +98,35 @@ export const changePassword = checkExact([
   }),
 ]);
 
+export const resetPassword = checkExact([
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .isString()
+    .withMessage("Password must be a string"),
+  body("confirmPassword").custom((value, { req }) => {
+    if (value !== req.body.password) {
+      throw new Error("Password confirmation does not match password");
+    }
+    return true;
+  }),
+   body("userId")
+    .notEmpty()
+    .withMessage("User ID is required")
+    .isMongoId()
+    .withMessage("User Id must be a valid mongodb id"),
+]);
+
 export const inviteUser = checkExact([
   body("badgeType")
     .optional()
     .isIn(["green", "yellow"])
     .withMessage("Badge type must be either green or yellow"),
+    body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .isString()
+    .withMessage("Password must be a valid string"),
 ]);
 
 export const forgotPassword = checkExact([
@@ -157,6 +181,11 @@ export const updateUser = [
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
+     body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid"),
   body("bankDetails").isObject().withMessage("Bank Details must be a object"),
   body("bankDetails.accountHolderName")
     .notEmpty()
@@ -186,6 +215,11 @@ export const editUser = [
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
+      body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid"),
   body("bankDetails").isObject().withMessage("Bank Details must be a object"),
   body("bankDetails.accountHolderName")
     .notEmpty()

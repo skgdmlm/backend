@@ -50,7 +50,8 @@ router
   )
   .post(
     "/reset-password",
-    userValidator.verifyInvitation,
+    roleAuth(["ADMIN", "USER"]),
+    userValidator.resetPassword,
     catchError,
     userController.resetPassword,
   )

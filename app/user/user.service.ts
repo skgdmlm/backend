@@ -41,6 +41,14 @@ export const getUserById = async (
   const result = await UserSchema.findById(id, projection).lean();
   return result;
 };
+export const getUserByEmailWithoutUserId = async (
+  email: string,
+  userId: string,
+  projection?: ProjectionType<IUser>,
+) => {
+  const result = await UserSchema.findOne({email, _id: {$ne: userId}}, projection).lean();
+  return result;
+};
 export const getUserByIdWithBankDetails = async (
   id: string,
   projection?: ProjectionType<IUser>,
