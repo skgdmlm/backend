@@ -127,6 +127,12 @@ export const inviteUser = checkExact([
     .withMessage("Password is required")
     .isString()
     .withMessage("Password must be a valid string"),
+
+     body("user")
+    .notEmpty()
+    .withMessage("User is required")
+    .isMongoId()
+    .withMessage("User must be a valid mongoDB ID"),
 ]);
 
 export const forgotPassword = checkExact([

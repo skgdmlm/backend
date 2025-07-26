@@ -15,8 +15,15 @@ export const getAllReferrals = asyncHandler(
         }
         
         const { skip = 0, limit = 10 } = req.query;
+        let query = {};
+        if(req.user.role === "ADMIN"){
+          query = {};
+        }
+        else{
+          query = { referrerId: req.user._id };
+        }
         const result = await referralsService.getAllReferrals(
-          req.user._id,
+          query,
           Number(skip),
           Number(limit),
         );

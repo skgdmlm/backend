@@ -36,17 +36,19 @@ export const getReferralsByPin = async (pin: string) => {
 };
 
 export const getAllReferrals = async (
-  referrerId: string,
+  query: Record<string, string>,
   skip: number,
   limit: number,
 ) => {
-  const result = await ReferralsSchema.find({ referrerId })
+
+  const result = await ReferralsSchema.find(query)
     .skip(skip)
     .limit(limit)
     .sort({
       createdAt: -1,
     })
     .populate("usedBy", "name", userSchema)
+    .populate("referrerId", "name", userSchema)
     .lean();
   return result;
 }
