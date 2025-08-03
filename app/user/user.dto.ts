@@ -3,6 +3,7 @@ import { type BaseSchema } from "../common/dto/base.dto";
 export type BadgeType = "green" | "yellow";
 export interface IUser extends BaseSchema {
   name?: string;
+  phone?: string;
   email: string;
   active?: boolean;
   role: "USER" | "ADMIN";

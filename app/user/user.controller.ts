@@ -60,7 +60,7 @@ export const inviteUser = asyncHandler(async (req: Request, res: Response) => {
 
 export const verifyInvitation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { pin, email, password, name } = req.body;
+    const { pin, email, password, name, phone } = req.body;
 
     const referralInfo = await verifyReferralPin(pin);
 
@@ -73,6 +73,7 @@ export const verifyInvitation = asyncHandler(
       referrerId: referralInfo.referrerId._id,
       password,
       name,
+      phone
     });
     await referralsService.editReferrals(referralInfo._id, { isUsed: true, usedBy: new Types.ObjectId(user._id) })
 

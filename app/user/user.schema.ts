@@ -12,6 +12,7 @@ export const hashPassword = async (password: string) => {
 const UserSchema = new Schema<IUser>(
   {
     name: { type: String },
+    phone: { type: String },
     email: { type: String, unique: true },
     active: { type: Boolean, required: false, default: true },
     role: {

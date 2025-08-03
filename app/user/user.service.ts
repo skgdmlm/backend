@@ -106,6 +106,7 @@ export async function buildReferralTree(userId: string): Promise<any> {
   return {
     id: user._id,
     name: user.name,
+    phone: user?.phone,
     attributes: { badge: user.badgeType },
     email: user.email,
     children,

@@ -23,6 +23,11 @@ export const verifyInvitation = checkExact([
     .isString()
     .bail()
     .withMessage("Name must be string"),
+  body("phone")
+    .notEmpty()
+    .withMessage("Phone is required")
+    .isString()
+    .withMessage("Phone must be a string"),
   body("pin")
     .notEmpty()
     .bail()
@@ -30,7 +35,7 @@ export const verifyInvitation = checkExact([
     .isString()
     .bail()
     .withMessage("Token must be string"),
-   body("email")
+  body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
@@ -110,7 +115,7 @@ export const resetPassword = checkExact([
     }
     return true;
   }),
-   body("userId")
+  body("userId")
     .notEmpty()
     .withMessage("User ID is required")
     .isMongoId()
@@ -122,13 +127,13 @@ export const inviteUser = checkExact([
     .optional()
     .isIn(["green", "yellow"])
     .withMessage("Badge type must be either green or yellow"),
-    body("password")
+  body("password")
     .notEmpty()
     .withMessage("Password is required")
     .isString()
     .withMessage("Password must be a valid string"),
 
-     body("user")
+  body("user")
     .notEmpty()
     .withMessage("User is required")
     .isMongoId()
@@ -187,7 +192,7 @@ export const updateUser = [
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
-     body("email")
+  body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
@@ -221,7 +226,7 @@ export const editUser = [
     .withMessage("name is required")
     .isString()
     .withMessage("name must be a string"),
-      body("email")
+  body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
