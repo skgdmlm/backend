@@ -15,7 +15,7 @@ export interface IUser extends BaseSchema {
   facebookId?: string;
   image?: string;
   linkedinId?: string;
-
+  userId?: string;
   referrerId?: string | null;
   bankDetails?: string | null;
   badgeType: BadgeType;

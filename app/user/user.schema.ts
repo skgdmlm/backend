@@ -33,7 +33,7 @@ const UserSchema = new Schema<IUser>(
     facebookId: { type: String, select: false },
     image: { type: String },
     linkedinId: { type: String, select: false },
-
+    userId: { type: String },
     referrerId: { type: Schema.Types.ObjectId, ref: "user", default: null },
     bankDetails: { type: Schema.Types.ObjectId, ref: "bank", default: null },
     badgeType: {

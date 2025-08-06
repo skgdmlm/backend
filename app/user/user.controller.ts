@@ -73,7 +73,8 @@ export const verifyInvitation = asyncHandler(
       referrerId: referralInfo.referrerId._id,
       password,
       name,
-      phone
+      phone,
+      userId: userService.generateUserId()
     });
     await referralsService.editReferrals(referralInfo._id, { isUsed: true, usedBy: new Types.ObjectId(user._id) })
 

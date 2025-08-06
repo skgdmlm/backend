@@ -64,10 +64,15 @@ export const getAllUser = async (
   projection?: ProjectionType<IUser>,
   options?: QueryOptions<IUser>,
 ) => {
-  if ("search" in condition) {
-    condition["name"] = { $regex: new RegExp(condition["search"], "i") };
-    delete condition["search"];
+  
+  if ("search" in condition && condition["search"].length > 0) {
+    condition["$or"] = [
+      { name: { $regex: new RegExp(condition["search"], "i") } },
+      { userId: { $regex: new RegExp(condition["search"], "i") } },
+    ];
   }
+  delete condition["search"];
+
   const result = await UserSchema.find(condition, projection, options)
     .sort({
       createdAt: -1,
@@ -111,4 +116,9 @@ export async function buildReferralTree(userId: string): Promise<any> {
     email: user.email,
     children,
   };
+}
+
+export function generateUserId() {
+  const randomNum = Math.floor(Math.random() * (9999999 - 10000 + 1)) + 10000;
+  return `USR-${randomNum}`;
 }
