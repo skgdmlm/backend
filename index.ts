@@ -22,7 +22,7 @@ declare global {
   }
 }
 const checkApi = () =>
-  fetch("https://mlm-be.onrender.com/")
+  fetch("https://backend-6ch5.onrender.com/")
     .then((res) => {
       console.log("BE is working");
     })
