@@ -78,7 +78,7 @@ export const verifyInvitation = asyncHandler(
     });
     await referralsService.editReferrals(referralInfo._id, { isUsed: true, usedBy: new Types.ObjectId(user._id) })
 
-    const amount = process.env.COMMISSION_AMOUNT || 2000;
+    const amount = process.env.COMMISSION_AMOUNT || 10000;
     await generateCommissions(user._id, Number(amount));
     res.send(createResponse(null, "User verified sucssefully"));
   },
